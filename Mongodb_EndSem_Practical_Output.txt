@@ -1,0 +1,256 @@
+test> use library
+switched to db library
+
+library> db.members.insertMany([
+...     {
+...         name: "Ravi",
+...         address: { city: "Chennai", pin: "600001" },
+...         borrowed: ["Python Basics", "MongoDB Guide"],
+...         fee: 0
+...     },
+...     {
+...         name: "Kumar",
+...         address: { city: "Chennai", pin: "600028" },
+...         borrowed: [],
+...         fee: 0
+...     },
+...     {
+...         name: "Sita",
+...         address: { city: "Bangalore", pin: "560001" },
+...         borrowed: ["MongoDB Guide"],
+...         fee: 50
+...     },
+...     {
+...         name: "Lakshmi",
+...         address: { city: "Madurai", pin: "625001" },
+...         borrowed: ["Python Basics"],
+...         fee: 120
+...     }
+... ])
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('6746b1a23f8e9a1c2d4e5f01'),
+    '1': ObjectId('6746b1a23f8e9a1c2d4e5f02'),
+    '2': ObjectId('6746b1a23f8e9a1c2d4e5f03'),
+    '3': ObjectId('6746b1a23f8e9a1c2d4e5f04')
+  }
+}
+
+library> show dbs
+admin    40.00 KiB
+config   72.00 KiB
+library  72.00 KiB
+local    40.00 KiB
+
+library> show collections
+members
+
+library> db.members.find(
+...     { "address.city": "Chennai" },
+...     { _id: 0, name: 1, address: 1 }
+... )
+[
+  { name: 'Ravi', address: { city: 'Chennai', pin: '600001' } },
+  { name: 'Kumar', address: { city: 'Chennai', pin: '600028' } }
+]
+
+library> db.members.find(
+...     { borrowed: "MongoDB Guide" },
+...     { _id: 0, name: 1, borrowed: 1 }
+... )
+[
+  { name: 'Ravi', borrowed: [ 'Python Basics', 'MongoDB Guide' ] },
+  { name: 'Sita', borrowed: [ 'MongoDB Guide' ] }
+]
+
+library> db.members.find(
+...     { borrowed: { $all: ["Python Basics", "MongoDB Guide"] } },
+...     { _id: 0, name: 1 }
+... )
+[
+  { name: 'Ravi' }
+]
+
+library> db.members.find(
+...     { borrowed: { $size: 0 } },
+...     { _id: 0, name: 1 }
+... )
+[
+  { name: 'Kumar' }
+]
+
+library> db.members.updateOne(
+...     { name: "Sita" },
+...     { $set: { "address.city": "Chennai" } }
+... )
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+library> db.members.countDocuments({ fee: { $gt: 0 } })
+2
+
+library> db.members.drop()
+true
+
+library> use sales
+switched to db sales
+
+sales> db.orders.insertMany([
+...     {
+...         orderId: 1,
+...         customer: "Arun",
+...         product: "Laptop",
+...         category: "Electronics",
+...         qty: 1,
+...         price: 55000
+...     },
+...     {
+...         orderId: 2,
+...         customer: "Divya",
+...         product: "Mouse",
+...         category: "Electronics",
+...         qty: 2,
+...         price: 500
+...     },
+...     {
+...         orderId: 3,
+...         customer: "Arun",
+...         product: "Pen",
+...         category: "Stationery",
+...         qty: 10,
+...         price: 40
+...     },
+...     {
+...         orderId: 4,
+...         customer: "Meena",
+...         product: "Notebook",
+...         category: "Stationery",
+...         qty: 20,
+...         price: 10
+...     },
+...     {
+...         orderId: 5,
+...         customer: "Divya",
+...         product: "Headphones",
+...         category: "Electronics",
+...         qty: 1,
+...         price: 1500
+...     },
+...     {
+...         orderId: 6,
+...         customer: "Karthik",
+...         product: "Chair",
+...         category: "Furniture",
+...         qty: 2,
+...         price: 3500
+...     }
+... ])
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('6746b1b83f8e9a1c2d4e5f05'),
+    '1': ObjectId('6746b1b83f8e9a1c2d4e5f06'),
+    '2': ObjectId('6746b1b83f8e9a1c2d4e5f07'),
+    '3': ObjectId('6746b1b83f8e9a1c2d4e5f08'),
+    '4': ObjectId('6746b1b83f8e9a1c2d4e5f09'),
+    '5': ObjectId('6746b1b83f8e9a1c2d4e5f0a')
+  }
+}
+
+sales> db.orders.aggregate([
+...     {
+...         $match: { category: "Electronics" }
+...     },
+...     {
+...         $project: {
+...             _id: 0,
+...             orderId: 1,
+...             product: 1
+...         }
+...     }
+... ])
+[
+  { orderId: 1, product: 'Laptop' },
+  { orderId: 2, product: 'Mouse' },
+  { orderId: 5, product: 'Headphones' }
+]
+
+sales> db.orders.aggregate([
+...     {
+...         $project: {
+...             _id: 0,
+...             orderId: 1,
+...             customer: 1,
+...             lineTotal: { $multiply: ["$qty", "$price"] }
+...         }
+...     }
+... ])
+[
+  { orderId: 1, customer: 'Arun', lineTotal: 55000 },
+  { orderId: 2, customer: 'Divya', lineTotal: 1000 },
+  { orderId: 3, customer: 'Arun', lineTotal: 400 },
+  { orderId: 4, customer: 'Meena', lineTotal: 200 },
+  { orderId: 5, customer: 'Divya', lineTotal: 1500 },
+  { orderId: 6, customer: 'Karthik', lineTotal: 7000 }
+]
+
+sales> db.orders.aggregate([
+...     {
+...         $group: {
+...             _id: "$category",
+...             totalQty: { $sum: "$qty" }
+...         }
+...     }
+... ])
+[
+  { _id: 'Electronics', totalQty: 4 },
+  { _id: 'Stationery', totalQty: 30 },
+  { _id: 'Furniture', totalQty: 2 }
+]
+
+sales> db.orders.aggregate([
+...     {
+...         $group: {
+...             _id: "$category",
+...             revenue: {
+...                 $sum: { $multiply: ["$qty", "$price"] }
+...             },
+...             avgPrice: { $avg: "$price" }
+...         }
+...     },
+...     {
+...         $sort: { revenue: -1 }
+...     }
+... ])
+[
+  { _id: 'Electronics', revenue: 57500, avgPrice: 19000 },
+  { _id: 'Furniture', revenue: 7000, avgPrice: 3500 },
+  { _id: 'Stationery', revenue: 600, avgPrice: 25 }
+]
+
+sales> db.orders.aggregate([
+...     {
+...         $group: {
+...             _id: "$customer",
+...             totalSpend: {
+...                 $sum: { $multiply: ["$qty", "$price"] }
+...             }
+...         }
+...     },
+...     {
+...         $sort: { totalSpend: -1 }
+...     },
+...     {
+...         $limit: 2
+...     }
+... ])
+[
+  { _id: 'Arun', totalSpend: 55400 },
+  { _id: 'Karthik', totalSpend: 7000 }
+]
